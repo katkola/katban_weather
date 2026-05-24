@@ -1,0 +1,14 @@
+{
+  "location": {
+    "latitude": 39.949,
+    "longitude": -82.996,
+    "city_name": "Columbus"
+  },
+  "display": {
+    "update_interval_seconds": 30,
+    "use_gui": false
+  },
+  "api": {
+    "user_agent": "KanBan_Weather_Display"
+  }
+}
