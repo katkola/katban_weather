@@ -1,9 +1,4 @@
 #!/usr/bin/env python3
-"""
-Simple console-based display for testing weather functionality
-"""
-
-from utils.weather_art import get_weather_symbol, get_current_weather_art
 import sys
 import os
 import time
@@ -13,83 +8,90 @@ sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 
 
 def main():
-    """Main application entry point for console display"""
     print("Starting KanBan Weather Display (Console Version)...")
-    import sys
     sys.stdout.flush()
 
-    # Import components
+    from utils.config_loader import ConfigLoader
     from framework_drivers.weather_gateway import WeatherGateway
     from use_cases.fetch_weather import FetchWeatherUseCase
     from interface_adapters.weather_controller import WeatherController
-    from utils.config_loader import ConfigLoader
+    from use_cases.fetch_calendar import FetchCalendarUseCase
+    from interface_adapters.calendar_controller import CalendarController
+    from use_cases.display_info import FetchDisplayInfoUseCase
+    from interface_adapters.view_presenter import ViewPresenter
 
-    # Initialize configuration
     config = ConfigLoader()
+    latitude = config.get_latitude()
+    longitude = config.get_longitude()
 
-    # Initialize dependencies (dependency injection)
     weather_gateway = WeatherGateway()
     fetch_weather_use_case = FetchWeatherUseCase(weather_gateway)
     weather_controller = WeatherController(fetch_weather_use_case)
 
-    # Get coordinates from config
-    latitude = config.get_latitude()
-    longitude = config.get_longitude()
+    try:
+        from framework_drivers.calendar_gateway import CalendarGateway
+        calendar_gateway = CalendarGateway()
+    except (ImportError, FileNotFoundError):
+        print("Calendar credentials not found, using mock data.")
+        from mock_data.calendar_mock_data import MockCalendarGateway
+        calendar_gateway = MockCalendarGateway()
 
-    # Override update interval for faster testing (5 seconds instead of 30)
-    update_interval = 5  # seconds
+    fetch_calendar_use_case = FetchCalendarUseCase(calendar_gateway)
+    calendar_controller = CalendarController(fetch_calendar_use_case)
+    display_use_case = FetchDisplayInfoUseCase(weather_controller, calendar_controller)
+    presenter = ViewPresenter()
+
+    update_interval = 5
 
     try:
         while True:
             try:
-                # Clear screen (works on most terminals)
                 print("\033[2J\033[H", end="")
+
+                info = display_use_case.execute(latitude, longitude)
+                weather_vm = presenter.present_weather(info)
+                calendar_vm = presenter.present_calendar(info)
 
                 print("=" * 50)
                 print("KanBan Weather Display")
                 print("=" * 50)
-                print(
-                    f"Last Updated: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}")
+                print(f"Last Updated: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}")
                 print()
 
-                # Get weather data for multiple periods (now, tonight, tomorrow)
-                weather_data_list = weather_controller.get_weather(
-                    latitude, longitude, periods_count=3)
+                cw = weather_vm['current']
+                print(f"{cw['condition']}")
+                print(cw['art'])
+                print()
+                print(f"  {cw['temp_text']}")
+                print(f"  {cw['humidity']}")
+                print(f"  {cw['wind']}")
+                print()
 
-                for i, weather_data in enumerate(weather_data_list):
-                    if i > 0:
-                        print()
-
-                    period_name = weather_data.period_name or f'PERIOD {i+1}'
-                    symbol = get_weather_symbol(
-                        weather_data.short_forecast, weather_data.period_name)
-                    print(f"{symbol}  {period_name}:")
-
-                    if i == 0:
-                        art = get_current_weather_art(
-                            weather_data.short_forecast, weather_data.period_name)
-                        print(art)
-                        print()
-
-                    print(
-                        f"  Temperature: {weather_data.temperature}°{weather_data.temperature_unit}")
-                    print(f"  Conditions: {weather_data.short_forecast}")
-                    print(f"  Humidity: {weather_data.relative_humidity}%")
-                    print(
-                        f"  Wind: {weather_data.wind_speed} {weather_data.wind_direction}")
-                    if weather_data.detailed_forecast:
-                        print(f"  Forecast: {weather_data.detailed_forecast}")
+                for p in weather_vm['hourly']:
+                    print(f"  {p['name']}: {p['temp']}  {p['condition']}")
 
                 print()
+                print("=" * 50)
+                print("Today's Schedule")
+                print("=" * 50)
+                print()
+
+                for section in calendar_vm['sections']:
+                    print(f"  [{section['title']}]")
+                    for item in section['items']:
+                        loc = item.get('location')
+                        loc_str = f"  📍 {loc}" if loc else ""
+                        print(f"    {item['time']:>10}  {item['title']}{loc_str}")
+                    print()
+
                 print("Press Ctrl+C to exit")
                 print("=" * 50)
                 sys.stdout.flush()
 
-                # Wait for configured interval before next update
                 time.sleep(update_interval)
 
             except Exception as e:
-                print(f"Error fetching weather data: {e}")
+                print(f"Error fetching data: {e}")
                 print("Retrying in 30 seconds...")
                 sys.stdout.flush()
                 time.sleep(30)
