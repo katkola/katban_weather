@@ -73,7 +73,8 @@ def test_calendar_event_to_dict():
         "start_time": "2023-01-01T10:00:00",
         "end_time": "2023-01-01T11:00:00",
         "location": "Conference Room A",
-        "description": "This is a test meeting"
+        "description": "This is a test meeting",
+        "category": "event"
     }
 
     assert result == expected

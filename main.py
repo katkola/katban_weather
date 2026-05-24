@@ -31,17 +31,18 @@ def main():
     fetch_weather_use_case = FetchWeatherUseCase(weather_gateway)
     weather_controller = WeatherController(fetch_weather_use_case)
 
-    # Optional calendar controller (Google packages may not be installed)
-    calendar_controller = None
+    # Calendar controller (falls back to mock data if unavailable)
+    from use_cases.fetch_calendar import FetchCalendarUseCase
+    from interface_adapters.calendar_controller import CalendarController
     try:
         from framework_drivers.calendar_gateway import CalendarGateway
-        from use_cases.fetch_calendar import FetchCalendarUseCase
-        from interface_adapters.calendar_controller import CalendarController
         calendar_gateway = CalendarGateway()
-        fetch_calendar_use_case = FetchCalendarUseCase(calendar_gateway)
-        calendar_controller = CalendarController(fetch_calendar_use_case)
-    except ImportError:
-        pass
+    except (ImportError, FileNotFoundError):
+        print("Calendar credentials not found, using mock data.")
+        from mock_data.calendar_mock_data import MockCalendarGateway
+        calendar_gateway = MockCalendarGateway()
+    fetch_calendar_use_case = FetchCalendarUseCase(calendar_gateway)
+    calendar_controller = CalendarController(fetch_calendar_use_case)
 
     from framework_drivers.gui_display import WeatherAndCalendarDisplay
 

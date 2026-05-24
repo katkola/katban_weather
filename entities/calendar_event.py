@@ -3,20 +3,23 @@ from typing import Optional
 
 class CalendarEvent:
     def __init__(self, summary: str, start_time: datetime, end_time: datetime,
-                 location: Optional[str] = None, description: Optional[str] = None):
+                 location: Optional[str] = None, description: Optional[str] = None,
+                 category: str = "event"):
         self.summary = summary
         self.start_time = start_time
         self.end_time = end_time
         self.location = location
         self.description = description
-    
+        self.category = category
+
     def to_dict(self):
         return {
             "summary": self.summary,
             "start_time": self.start_time.isoformat() if self.start_time else None,
             "end_time": self.end_time.isoformat() if self.end_time else None,
             "location": self.location,
-            "description": self.description
+            "description": self.description,
+            "category": self.category
         }
     
     @property
