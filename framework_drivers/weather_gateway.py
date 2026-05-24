@@ -48,3 +48,17 @@ class WeatherGateway:
         response = self.session.get(alerts_url)
         response.raise_for_status()
         return response.json()
+    
+    def get_observation_stations(self, points_data):
+        """Get list of observation stations from points data"""
+        stations_url = points_data['properties']['observationStations']
+        response = self.session.get(stations_url)
+        response.raise_for_status()
+        return response.json()
+    
+    def get_latest_observation(self, station_id):
+        """Get the latest observation from a station"""
+        url = f"{self.BASE_URL}/stations/{station_id}/observations/latest"
+        response = self.session.get(url)
+        response.raise_for_status()
+        return response.json()
