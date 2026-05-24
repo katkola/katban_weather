@@ -3,12 +3,12 @@
 Simple console-based display for testing weather functionality
 """
 
+from utils.weather_art import get_weather_symbol, get_current_weather_art
 import sys
 import os
 import time
 from datetime import datetime
 
-# Add the project root to the path
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 
 
@@ -56,14 +56,21 @@ def main():
                 weather_data_list = weather_controller.get_weather(
                     latitude, longitude, periods_count=3)
 
-                # Display weather information for each period
                 for i, weather_data in enumerate(weather_data_list):
                     if i > 0:
-                        print()  # Add spacing between periods
+                        print()
 
-                    # Use the period name from the API
                     period_name = weather_data.period_name or f'PERIOD {i+1}'
-                    print(f"{period_name}:")
+                    symbol = get_weather_symbol(
+                        weather_data.short_forecast, weather_data.period_name)
+                    print(f"{symbol}  {period_name}:")
+
+                    if i == 0:
+                        art = get_current_weather_art(
+                            weather_data.short_forecast, weather_data.period_name)
+                        print(art)
+                        print()
+
                     print(
                         f"  Temperature: {weather_data.temperature}°{weather_data.temperature_unit}")
                     print(f"  Conditions: {weather_data.short_forecast}")

@@ -7,6 +7,8 @@ from datetime import datetime
 import sys
 import os
 
+from utils.weather_art import get_weather_symbol, get_current_weather_art
+
 # Add the project root to the path for config loader
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
@@ -43,6 +45,11 @@ class WeatherAndCalendarDisplay:
         self.temp_label = tk.Label(self.current_frame, text="--°",
                                    font=("Helvetica", 100), fg="white", bg="black")
         self.temp_label.pack()
+
+        self.art_label = tk.Label(self.current_frame, text="",
+                                  font=("Courier", 14), fg="white", bg="black",
+                                  justify="center")
+        self.art_label.pack(pady=(5, 0))
 
         self.condition_label = tk.Label(self.current_frame, text="--",
                                         font=("Helvetica", 30), fg="white", bg="black")
@@ -125,6 +132,9 @@ class WeatherAndCalendarDisplay:
         current_weather = weather_data_list[0]
         self.temp_label.config(
             text=f"{current_weather.temperature}°{current_weather.temperature_unit}")
+        art = get_current_weather_art(
+            current_weather.short_forecast, current_weather.period_name)
+        self.art_label.config(text=art)
         self.condition_label.config(text=current_weather.short_forecast)
         self.humidity_label.config(
             text=f"Humidity: {current_weather.relative_humidity}%")
@@ -162,7 +172,10 @@ class WeatherAndCalendarDisplay:
             temp_label.pack(pady=2)
 
             # Conditions
-            condition_label = tk.Label(period_frame, text=weather_data.short_forecast,
+            symbol = get_weather_symbol(
+                weather_data.short_forecast, weather_data.period_name)
+            condition_text = f"{symbol} {weather_data.short_forecast}"
+            condition_label = tk.Label(period_frame, text=condition_text,
                                        font=("Helvetica", 12), fg="white", bg="black")
             condition_label.pack(pady=2)
 
