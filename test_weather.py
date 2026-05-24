@@ -57,7 +57,8 @@ def test_weather_data_to_dict():
         "short_forecast": "Partly Cloudy",
         "detailed_forecast": "Partly cloudy with a chance of rain",
         "relative_humidity": 65,
-        "timestamp": "2023-01-01T12:00:00Z"
+        "timestamp": "2023-01-01T12:00:00Z",
+        "period_name": None
     }
 
     assert result == expected
