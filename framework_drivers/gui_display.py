@@ -7,7 +7,6 @@ from datetime import datetime
 import sys
 import os
 
-from utils.weather_art import get_weather_symbol, get_current_weather_art
 
 # Add the project root to the path for config loader
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
@@ -15,8 +14,11 @@ sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 class WeatherAndCalendarDisplay:
     def __init__(self, weather_controller, calendar_controller):
-        self.weather_controller = weather_controller
-        self.calendar_controller = calendar_controller
+        from use_cases.display_info import FetchDisplayInfoUseCase
+        from interface_adapters.view_presenter import ViewPresenter
+        self.display_use_case = FetchDisplayInfoUseCase(
+            weather_controller, calendar_controller)
+        self.presenter = ViewPresenter()
         self.root = tk.Tk()
         self.root.title("KanBan Weather & Calendar Display")
         self.root.attributes("-fullscreen", True)
@@ -121,78 +123,47 @@ class WeatherAndCalendarDisplay:
             target=self.weather_update_loop, daemon=True)
         self.weather_update_thread.start()
 
-        if calendar_controller is not None:
-            self.calendar_update_thread = threading.Thread(
-                target=self.calendar_update_loop, daemon=True)
-            self.calendar_update_thread.start()
+        self.calendar_update_thread = threading.Thread(
+            target=self.calendar_update_loop, daemon=True)
+        self.calendar_update_thread.start()
 
         self.update_time()
 
-    def update_weather(self, weather_data_list):
-        """Update the display with new weather data for multiple periods"""
-        if not weather_data_list:
-            return
+    def render_weather(self, weather_vm):
+        cw = weather_vm['current']
+        self.temp_label.config(text=cw['temp_text'])
+        self.art_label.config(text=cw['art'])
+        self.condition_label.config(text=cw['condition'])
+        self.humidity_label.config(text=cw['humidity'])
+        self.wind_label.config(text=cw['wind'])
+        self._render_hourly(weather_vm['hourly'])
 
-        # Update current weather (first period)
-        current_weather = weather_data_list[0]
-        self.temp_label.config(
-            text=f"{current_weather.temperature}°{current_weather.temperature_unit}")
-        art = get_current_weather_art(
-            current_weather.short_forecast, current_weather.period_name)
-        self.art_label.config(text=art)
-        self.condition_label.config(text=current_weather.short_forecast)
-        self.humidity_label.config(
-            text=f"Humidity: {current_weather.relative_humidity}%")
-        self.wind_label.config(
-            text=f"Wind: {current_weather.wind_speed} {current_weather.wind_direction}")
-
-        # TODO: Update hourly forecast - we could show the three periods here instead
-        # For now, we'll update the hourly container to show our three-period forecast
-        self.update_hourly_forecast(weather_data_list)
-
-    def update_hourly_forecast(self, weather_data_list):
-        """Update the hourly forecast container with our three-period forecast"""
-        # Clear existing widgets
+    def _render_hourly(self, periods):
         for widget in self.hourly_container.winfo_children():
             widget.destroy()
 
-        if not weather_data_list:
+        if not periods:
             return
 
-        # Create a label for each period
-        # Limit to 3 periods
-        for i, weather_data in enumerate(weather_data_list[:3]):
-            period_frame = tk.Frame(self.hourly_container, bg='black')
-            period_frame.pack(side="left", expand=True, fill="both", padx=5)
+        for p in periods:
+            frame = tk.Frame(self.hourly_container, bg='black')
+            frame.pack(side="left", expand=True, fill="both", padx=5)
 
-            # Period name from API
-            period_name = weather_data.period_name or f'Period {i+1}'
-            name_label = tk.Label(period_frame, text=period_name,
-                                  font=("Helvetica", 16), fg="white", bg="black")
-            name_label.pack(pady=(5, 0))
-
-            # Temperature
-            temp_label = tk.Label(period_frame, text=f"{weather_data.temperature}°{weather_data.temperature_unit}",
-                                  font=("Helvetica", 20), fg="yellow", bg="black")
-            temp_label.pack(pady=2)
-
-            # Conditions
-            symbol = get_weather_symbol(
-                weather_data.short_forecast, weather_data.period_name)
-            condition_text = f"{symbol} {weather_data.short_forecast}"
-            condition_label = tk.Label(period_frame, text=condition_text,
-                                       font=("Helvetica", 12), fg="white", bg="black")
-            condition_label.pack(pady=2)
-
-            # Humidity
-            humidity_label = tk.Label(period_frame, text=f"Humidity: {weather_data.relative_humidity}%",
-                                      font=("Helvetica", 12), fg="lightgray", bg="black")
-            humidity_label.pack(pady=2)
-
-            # Wind
-            wind_label = tk.Label(period_frame, text=f"Wind: {weather_data.wind_speed} {weather_data.wind_direction}",
-                                  font=("Helvetica", 12), fg="lightgray", bg="black")
-            wind_label.pack(pady=(2, 5))
+            tk.Label(frame, text=p['name'],
+                     font=("Helvetica", 16), fg="white", bg="black"
+                     ).pack(pady=(5, 0))
+            tk.Label(frame, text=p['temp'],
+                     font=("Helvetica", 20), fg="yellow", bg="black"
+                     ).pack(pady=2)
+            tk.Label(frame, text=p['condition'],
+                     font=("Helvetica", 12), fg="white", bg="black"
+                     ).pack(pady=2)
+            tk.Label(frame, text=p['humidity'],
+                     font=("Helvetica", 12), fg="lightgray", bg="black"
+                     ).pack(pady=2)
+            tk.Label(frame, text=p['wind'],
+                     font=("Helvetica", 12), fg="lightgray", bg="black"
+                     ).pack(pady=(2, 5))
 
     @staticmethod
     def _draw_rounded_border(canvas):
@@ -230,18 +201,13 @@ class WeatherAndCalendarDisplay:
 
         canvas.tag_lower('border')
 
-    def _render_event_row(self, parent, event):
-        """Render a single event row with a curved light-blue border"""
+    def _render_event_row(self, parent, item):
         canvas = tk.Canvas(parent, bg='black', highlightthickness=0)
         canvas.pack(fill="x", pady=5)
 
         content = tk.Frame(canvas, bg='black')
 
-        time_str = event.start_time.strftime("%I:%M %p")
-        if event.is_all_day:
-            time_str = "All Day"
-
-        time_label = tk.Label(content, text=time_str,
+        time_label = tk.Label(content, text=item['time'],
                               font=("Helvetica", 15), fg="lightgray",
                               bg="black", width=10)
         time_label.pack(side="left", padx=(20, 14), pady=8)
@@ -249,13 +215,14 @@ class WeatherAndCalendarDisplay:
         details = tk.Frame(content, bg='black')
         details.pack(side="left", fill="x", expand=True)
 
-        title_label = tk.Label(details, text=event.summary,
+        title_label = tk.Label(details, text=item['title'],
                                font=("Helvetica", 16), fg="white",
                                bg="black", anchor="w")
         title_label.pack(anchor="w", pady=(8, 2), padx=(0, 20))
 
-        if event.location:
-            location_label = tk.Label(details, text=f"📍 {event.location}",
+        loc = item.get('location')
+        if loc:
+            location_label = tk.Label(details, text=f"📍 {loc}",
                                       font=("Helvetica", 13), fg="lightgray",
                                       bg="black", anchor="w")
             location_label.pack(anchor="w", padx=(0, 20), pady=(0, 6))
@@ -267,45 +234,29 @@ class WeatherAndCalendarDisplay:
         canvas.after_idle(
             lambda c=canvas: self._draw_rounded_border(c))
 
-    def _render_section_header(self, parent, title, color="#888"):
-        """Render a section header label"""
-        header = tk.Label(parent, text=title,
-                          font=("Helvetica", 13, "bold"), fg=color, bg="black",
-                          anchor="w")
-        header.pack(fill="x", pady=(10, 2))
+    @staticmethod
+    def _render_section_header(parent, title, color="#888"):
+        tk.Label(parent, text=title,
+                 font=("Helvetica", 13, "bold"), fg=color, bg="black",
+                 anchor="w"
+                 ).pack(fill="x", pady=(10, 2))
 
-    def update_calendar(self, events):
-        """Update the calendar display, grouped by type"""
+    def render_calendar(self, calendar_vm):
         for widget in self.calendar_container.winfo_children():
             widget.destroy()
 
-        if not events:
-            no_events_label = tk.Label(self.calendar_container, text="No events today",
-                                       font=("Helvetica", 18), fg="lightgray", bg="black")
-            no_events_label.pack(pady=20)
+        sections = calendar_vm['sections']
+        if not sections:
+            tk.Label(self.calendar_container, text="No events today",
+                     font=("Helvetica", 18), fg="lightgray", bg="black"
+                     ).pack(pady=20)
             return
 
-        all_day = [e for e in events if e.is_all_day]
-        timed_events = [e for e in events if not e.is_all_day and e.category == 'event']
-        timed_tasks = [e for e in events if not e.is_all_day and e.category == 'task']
-
-        if all_day:
+        for section in sections:
             self._render_section_header(
-                self.calendar_container, "ALL DAY", "#6ab04c")
-            for event in all_day:
-                self._render_event_row(self.calendar_container, event)
-
-        if timed_events:
-            self._render_section_header(
-                self.calendar_container, "EVENTS", "#4a9eff")
-            for event in timed_events:
-                self._render_event_row(self.calendar_container, event)
-
-        if timed_tasks:
-            self._render_section_header(
-                self.calendar_container, "TASKS", "#e8a838")
-            for event in timed_tasks:
-                self._render_event_row(self.calendar_container, event)
+                self.calendar_container, section['title'], section['color'])
+            for item in section['items']:
+                self._render_event_row(self.calendar_container, item)
 
     def update_time(self):
         """Update the time display"""
@@ -314,8 +265,6 @@ class WeatherAndCalendarDisplay:
         self.root.after(1000, self.update_time)  # Update every second
 
     def weather_update_loop(self):
-        """Background thread to periodically fetch weather data"""
-        # Get coordinates from config
         from utils.config_loader import ConfigLoader
         config = ConfigLoader()
         latitude = config.get_latitude()
@@ -323,28 +272,30 @@ class WeatherAndCalendarDisplay:
 
         while self.running:
             try:
-                weather_data_list = self.weather_controller.get_weather(
-                    latitude, longitude, periods_count=3)
-                # Update UI in main thread
-                self.root.after(0, self.update_weather, weather_data_list)
+                info = self.display_use_case.execute(
+                    latitude, longitude)
+                vm = self.presenter.present_weather(info)
+                self.root.after(0, self.render_weather, vm)
             except Exception as e:
                 print(f"Error fetching weather: {e}")
 
-            # Wait 15 minutes before next update
             time.sleep(15 * 60)
 
     def calendar_update_loop(self):
-        """Background thread to periodically fetch calendar data"""
+        from utils.config_loader import ConfigLoader
+        config = ConfigLoader()
+        latitude = config.get_latitude()
+        longitude = config.get_longitude()
+
         while self.running:
             try:
-                events = self.calendar_controller.get_today_events(
-                    max_results=10)
-                # Update UI in main thread
-                self.root.after(0, self.update_calendar, events)
+                info = self.display_use_case.execute(
+                    latitude, longitude)
+                vm = self.presenter.present_calendar(info)
+                self.root.after(0, self.render_calendar, vm)
             except Exception as e:
                 print(f"Error fetching calendar: {e}")
 
-            # Wait 5 minutes before next update
             time.sleep(5 * 60)
 
     def run(self):
