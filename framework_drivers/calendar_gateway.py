@@ -11,13 +11,14 @@ from googleapiclient.errors import HttpError
 # If modifying these scopes, delete the file token.pickle.
 SCOPES = ['https://www.googleapis.com/auth/calendar.readonly']
 
+
 class CalendarGateway:
     def __init__(self, credentials_file: str = 'credentials.json', token_file: str = 'token.pickle'):
         self.credentials_file = credentials_file
         self.token_file = token_file
         self.service = None
         self._authenticate()
-    
+
     def _authenticate(self):
         """Authenticate with Google Calendar API"""
         creds = None
@@ -42,9 +43,9 @@ class CalendarGateway:
             # Save the credentials for the next run
             with open(self.token_file, 'wb') as token:
                 pickle.dump(creds, token)
-        
+
         self.service = build('calendar', 'v3', credentials=creds)
-    
+
     def get_today_events(self, max_results: int = 10) -> List[Dict[str, Any]]:
         """Get events for today from the primary calendar"""
         try:
@@ -52,9 +53,11 @@ class CalendarGateway:
             now = datetime.utcnow().isoformat() + 'Z'  # 'Z' indicates UTC time
             # We want events from today only, so we set the timeMin to start of today
             # and timeMax to end of today.
-            today_start = datetime.utcnow().replace(hour=0, minute=0, second=0, microsecond=0).isoformat() + 'Z'
-            today_end = datetime.utcnow().replace(hour=23, minute=59, second=59, microsecond=999999).isoformat() + 'Z'
-            
+            today_start = datetime.utcnow().replace(
+                hour=0, minute=0, second=0, microsecond=0).isoformat() + 'Z'
+            today_end = datetime.utcnow().replace(hour=23, minute=59, second=59,
+                                                  microsecond=999999).isoformat() + 'Z'
+
             events_result = self.service.events().list(
                 calendarId='primary',
                 timeMin=today_start,
@@ -63,7 +66,7 @@ class CalendarGateway:
                 singleEvents=True,
                 orderBy='startTime'
             ).execute()
-            
+
             events = events_result.get('items', [])
             return events
         except HttpError as error:

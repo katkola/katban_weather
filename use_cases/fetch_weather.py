@@ -1,14 +1,17 @@
 from entities.weather_data import WeatherData
 
+
 def _c_to_f(celsius):
     if celsius is None:
         return None
     return round((celsius * 9 / 5) + 32)
 
+
 def _kmh_to_mph(kmh):
     if kmh is None:
         return None
     return round(kmh * 0.621371)
+
 
 def _degrees_to_cardinal(degrees):
     if degrees is None:
@@ -17,6 +20,7 @@ def _degrees_to_cardinal(degrees):
             'S', 'SSW', 'SW', 'WSW', 'W', 'WNW', 'NW', 'NNW']
     index = round(degrees / 22.5) % 16
     return dirs[index]
+
 
 def _observation_weather_data(observation):
     """Build a WeatherData from a live station observation"""
@@ -45,6 +49,7 @@ def _observation_weather_data(observation):
         period_name='NOW'
     )
 
+
 class FetchWeatherUseCase:
     def __init__(self, weather_gateway):
         self.weather_gateway = weather_gateway
@@ -63,11 +68,13 @@ class FetchWeatherUseCase:
         # ---- NOW: live observation ----
         now_data = None
         try:
-            stations_data = self.weather_gateway.get_observation_stations(points_data)
+            stations_data = self.weather_gateway.get_observation_stations(
+                points_data)
             features = stations_data.get('features', [])
             if features:
                 station_id = features[0]['properties']['stationIdentifier']
-                observation = self.weather_gateway.get_latest_observation(station_id)
+                observation = self.weather_gateway.get_latest_observation(
+                    station_id)
                 now_data = _observation_weather_data(observation)
         except Exception:
             now_data = None
