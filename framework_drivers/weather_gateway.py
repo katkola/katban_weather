@@ -11,6 +11,7 @@ class WeatherGateway:
 
     def __init__(self, user_agent=None):
         self.session = requests.Session()
+        self.mock_alert = os.environ.get('MOCK_ALERT', '').lower() in ('1', 'true', 'yes')
         if user_agent is None:
             # Try to get from config, fallback to default
             try:
@@ -52,9 +53,7 @@ class WeatherGateway:
 
     def get_active_alerts(self, latitude, longitude):
         """Get active alerts for a lat/lon point"""
-        from utils.config_loader import ConfigLoader
-        config = ConfigLoader()
-        if config.get_mock_alert():
+        if self.mock_alert:
             return {
                 'features': [{
                     'properties': {
