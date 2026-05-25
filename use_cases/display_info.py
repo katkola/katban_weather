@@ -1,8 +1,15 @@
-from typing import List, Optional, Any, Dict
+from typing import List, Optional, Any, Dict, Protocol
 from entities.weather_data import WeatherData
 from entities.calendar_event import CalendarEvent
-from interface_adapters.weather_controller import WeatherController
-from interface_adapters.calendar_controller import CalendarController
+
+
+class WeatherControllerProtocol(Protocol):
+    def get_weather(self, latitude: float, longitude: float, periods_count: int = 3) -> List[WeatherData]: ...
+    def get_alerts(self, latitude: float, longitude: float) -> List[Dict[str, Any]]: ...
+
+
+class CalendarControllerProtocol(Protocol):
+    def get_today_events(self, max_results: int = 10) -> List[CalendarEvent]: ...
 
 
 class DisplayInfo:
@@ -15,8 +22,8 @@ class DisplayInfo:
 
 
 class FetchDisplayInfoUseCase:
-    def __init__(self, weather_controller: WeatherController,
-                 calendar_controller: CalendarController):
+    def __init__(self, weather_controller: WeatherControllerProtocol,
+                 calendar_controller: CalendarControllerProtocol):
         self.weather_controller = weather_controller
         self.calendar_controller = calendar_controller
 

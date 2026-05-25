@@ -1,5 +1,6 @@
 class MockWeatherGateway:
     def __init__(self):
+        self.active_alerts = {'features': []}
         self.stations_data = {
             'features': [
                 {'properties': {'stationIdentifier': 'KJFK'}}
@@ -18,6 +19,10 @@ class MockWeatherGateway:
             self.observation_data['properties']['temperature']['value'] = temp_c
         if humidity is not None:
             self.observation_data['properties']['relativeHumidity']['value'] = humidity
+        return self
+
+    def set_alerts(self, alerts):
+        self.active_alerts = {'features': alerts}
         return self
 
     def get_points(self, latitude, longitude):
@@ -105,25 +110,6 @@ class MockWeatherGateway:
                 ]
             }
         }
-
-    def __init__(self):
-        self.active_alerts = {'features': []}
-        self.stations_data = {
-            'features': [
-                {'properties': {'stationIdentifier': 'KJFK'}}
-            ]
-        }
-        self.observation_data = {
-            'properties': {
-                'temperature': {'value': 22.2},
-                'relativeHumidity': {'value': 58},
-                'timestamp': '2025-05-24T14:00:00+00:00',
-            }
-        }
-
-    def set_alerts(self, alerts):
-        self.active_alerts = {'features': alerts}
-        return self
 
     def get_alerts(self, alerts_url):
         return {'features': []}

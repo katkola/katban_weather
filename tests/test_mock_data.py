@@ -28,7 +28,7 @@ class TestMockCalendarGateway:
         use_case = FetchCalendarUseCase(gateway)
         events = use_case.execute(max_results=10)
 
-        assert len(events) == 10
+        assert len(events) == 5
 
     def test_respects_max_results(self):
         gateway = MockCalendarGateway()

@@ -28,11 +28,13 @@ def main():
     fetch_weather_use_case = FetchWeatherUseCase(weather_gateway)
     weather_controller = WeatherController(fetch_weather_use_case)
 
-    try:
-        from framework_drivers.calendar_gateway import CalendarGateway
-        calendar_gateway = CalendarGateway()
-    except (ImportError, FileNotFoundError):
-        print("Calendar credentials not found, using mock data.")
+    from framework_drivers.ics_calendar_gateway import IcsCalendarGateway
+    calendar_config = config.load_config().get('calendar', {})
+    ics_url = calendar_config.get('ics_url', '')
+    if ics_url:
+        calendar_gateway = IcsCalendarGateway(ics_url)
+    else:
+        print("Calendar ICS URL not configured, using mock data.")
         from mock_data.calendar_mock_data import MockCalendarGateway
         calendar_gateway = MockCalendarGateway()
 

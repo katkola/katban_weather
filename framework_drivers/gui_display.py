@@ -341,13 +341,11 @@ class WeatherAndCalendarDisplay:
         self.root.destroy()
 
 
-# Example usage (will be replaced with proper dependency injection)
 if __name__ == "__main__":
-    # This is just for testing - in real app, we'd use proper DI
     from framework_drivers.weather_gateway import WeatherGateway
     from use_cases.fetch_weather import FetchWeatherUseCase
     from interface_adapters.weather_controller import WeatherController
-    from framework_drivers.calendar_gateway import CalendarGateway
+    from framework_drivers.ics_calendar_gateway import IcsCalendarGateway
     from use_cases.fetch_calendar import FetchCalendarUseCase
     from interface_adapters.calendar_controller import CalendarController
 
@@ -356,7 +354,17 @@ if __name__ == "__main__":
         fetch_weather_use_case = FetchWeatherUseCase(weather_gateway)
         weather_controller = WeatherController(fetch_weather_use_case)
 
-        calendar_gateway = CalendarGateway()
+        from utils.config_loader import ConfigLoader
+        config = ConfigLoader()
+        calendar_config = config.load_config().get('calendar', {})
+        ics_url = calendar_config.get('ics_url', '')
+        if ics_url:
+            calendar_gateway = IcsCalendarGateway(ics_url)
+        else:
+            print("Calendar ICS URL not configured, using mock data.")
+            from mock_data.calendar_mock_data import MockCalendarGateway
+            calendar_gateway = MockCalendarGateway()
+
         fetch_calendar_use_case = FetchCalendarUseCase(calendar_gateway)
         calendar_controller = CalendarController(fetch_calendar_use_case)
 
@@ -365,4 +373,3 @@ if __name__ == "__main__":
         app.run()
     except Exception as e:
         print(f"Error initializing application: {e}")
-        print("Make sure you have credentials.json for Google Calendar API")
