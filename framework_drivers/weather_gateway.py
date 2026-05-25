@@ -45,10 +45,27 @@ class WeatherGateway:
         return response.json()
 
     def get_alerts(self, alerts_url):
-        """Get alerts data"""
+        """Get alerts data from a full URL"""
         response = self.session.get(alerts_url)
         response.raise_for_status()
         return response.json()
+
+    def get_active_alerts(self, latitude, longitude):
+        """Get active alerts for a lat/lon point"""
+        from utils.config_loader import ConfigLoader
+        config = ConfigLoader()
+        if config.get_mock_alert():
+            return {
+                'features': [{
+                    'properties': {
+                        'event': 'Mock Heat Advisory',
+                        'headline': 'Mock Heat Advisory in effect until 8 PM EDT',
+                        'severity': 'Moderate'
+                    }
+                }]
+            }
+        url = f"{self.BASE_URL}/alerts/active?point={latitude},{longitude}"
+        return self.get_alerts(url)
 
     def get_observation_stations(self, points_data):
         """Get list of observation stations from points data"""

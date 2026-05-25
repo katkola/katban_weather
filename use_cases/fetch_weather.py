@@ -54,6 +54,10 @@ class FetchWeatherUseCase:
             )
         return None
 
+    def get_alerts(self, latitude, longitude):
+        alerts_data = self.weather_gateway.get_active_alerts(latitude, longitude)
+        return alerts_data.get('features', [])
+
     def execute(self, latitude, longitude, periods_count=3):
         points_data = self.weather_gateway.get_points(latitude, longitude)
 

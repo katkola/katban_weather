@@ -10,5 +10,8 @@
   },
   "api": {
     "user_agent": "KanBan_Weather_Display"
+  },
+  "development": {
+    "mock_alert": true
   }
 }

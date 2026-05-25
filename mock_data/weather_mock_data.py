@@ -106,8 +106,30 @@ class MockWeatherGateway:
             }
         }
 
+    def __init__(self):
+        self.active_alerts = {'features': []}
+        self.stations_data = {
+            'features': [
+                {'properties': {'stationIdentifier': 'KJFK'}}
+            ]
+        }
+        self.observation_data = {
+            'properties': {
+                'temperature': {'value': 22.2},
+                'relativeHumidity': {'value': 58},
+                'timestamp': '2025-05-24T14:00:00+00:00',
+            }
+        }
+
+    def set_alerts(self, alerts):
+        self.active_alerts = {'features': alerts}
+        return self
+
     def get_alerts(self, alerts_url):
         return {'features': []}
+
+    def get_active_alerts(self, latitude, longitude):
+        return self.active_alerts
 
     def get_observation_stations(self, points_data):
         return self.stations_data

@@ -6,5 +6,7 @@ class WeatherController:
         self.fetch_weather_use_case = fetch_weather_use_case
 
     def get_weather(self, latitude, longitude, periods_count=3):
-        """Get weather data for the specified coordinates"""
         return self.fetch_weather_use_case.execute(latitude, longitude, periods_count)
+
+    def get_alerts(self, latitude, longitude):
+        return self.fetch_weather_use_case.get_alerts(latitude, longitude)

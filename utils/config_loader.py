@@ -76,6 +76,15 @@ class ConfigLoader:
         """Get user agent string"""
         return self.get_api_config().get('user_agent', 'KanBan_Weather_Display (your.email@example.com)')
 
+    def get_development_config(self) -> Dict[str, Any]:
+        """Get development configuration"""
+        config = self.load_config()
+        return config.get('development', self._get_default_config()['development'])
+
+    def get_mock_alert(self) -> bool:
+        """Get whether to use mock alert data instead of real NWS alerts"""
+        return self.get_development_config().get('mock_alert', False)
+
     def _get_default_config(self) -> Dict[str, Any]:
         """Get default configuration"""
         return {
@@ -90,5 +99,8 @@ class ConfigLoader:
             },
             "api": {
                 "user_agent": "KanBan_Weather_Display (your.email@example.com)"
+            },
+            "development": {
+                "mock_alert": False
             }
         }

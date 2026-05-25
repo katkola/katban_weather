@@ -9,7 +9,7 @@ from use_cases.display_info import DisplayInfo
 from interface_adapters.view_presenter import ViewPresenter
 
 
-def make_info(weather=None, calendar=None):
+def make_info(weather=None, calendar=None, alerts=None):
     if weather is None:
         weather = [
             WeatherData(72, "F", "5 mph", "NE", "Partly Cloudy", "Cloudy", 45, "2025-06-01T12:00:00Z", "NOW"),
@@ -21,7 +21,11 @@ def make_info(weather=None, calendar=None):
             CalendarEvent("All Day Event", datetime(2025, 6, 1, 0, 0), datetime(2025, 6, 2, 0, 0), category="event"),
             CalendarEvent("Review PRs", datetime(2025, 6, 1, 11, 0), datetime(2025, 6, 1, 11, 30), category="task"),
         ]
-    return DisplayInfo(weather_periods=weather, calendar_events=calendar)
+    if alerts is None:
+        alerts = [
+            {'properties': {'event': 'Heat Advisory', 'headline': 'Heat Advisory until 8 PM', 'severity': 'Moderate'}},
+        ]
+    return DisplayInfo(weather_periods=weather, calendar_events=calendar, alerts=alerts)
 
 
 class TestPresentWeather:
@@ -99,3 +103,41 @@ class TestPresentCalendar:
         vm = ViewPresenter().present_calendar(make_info(calendar=cal))
         item = vm['sections'][0]['items'][0]
         assert item['location'] is None
+
+
+class TestPresentAlerts:
+    def test_alerts_included_in_weather_view_model(self):
+        vm = ViewPresenter().present_weather(make_info())
+        assert 'alerts' in vm
+        assert len(vm['alerts']) == 1
+
+    def test_alert_has_event_headline_severity(self):
+        vm = ViewPresenter().present_weather(make_info())
+        a = vm['alerts'][0]
+        assert a['event'] == 'Heat Advisory'
+        assert a['headline'] == 'Heat Advisory until 8 PM'
+        assert a['severity'] == 'Moderate'
+
+    def test_empty_alerts_returns_empty_list(self):
+        vm = ViewPresenter().present_weather(make_info(alerts=[]))
+        assert vm['alerts'] == []
+
+    def test_none_alerts_returns_empty_list(self):
+        info = DisplayInfo(weather_periods=make_info().weather_periods, calendar_events=make_info().calendar_events, alerts=None)
+        vm = ViewPresenter().present_weather(info)
+        assert vm['alerts'] == []
+
+    def test_multiple_alerts(self):
+        alerts = [
+            {'properties': {'event': 'Flood Watch', 'headline': 'Flood Watch', 'severity': 'Severe'}},
+            {'properties': {'event': 'Wind Advisory', 'headline': 'Wind Advisory', 'severity': 'Minor'}},
+        ]
+        vm = ViewPresenter().present_weather(make_info(alerts=alerts))
+        assert len(vm['alerts']) == 2
+
+    def test_alert_missing_fields_uses_defaults(self):
+        alerts = [{'properties': {}}]
+        vm = ViewPresenter().present_weather(make_info(alerts=alerts))
+        a = vm['alerts'][0]
+        assert a['event'] == 'Alert'
+        assert a['severity'] == 'Unknown'

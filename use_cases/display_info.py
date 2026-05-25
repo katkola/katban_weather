@@ -1,4 +1,4 @@
-from typing import List, Optional
+from typing import List, Optional, Any, Dict
 from entities.weather_data import WeatherData
 from entities.calendar_event import CalendarEvent
 from interface_adapters.weather_controller import WeatherController
@@ -7,9 +7,11 @@ from interface_adapters.calendar_controller import CalendarController
 
 class DisplayInfo:
     def __init__(self, weather_periods: List[WeatherData],
-                 calendar_events: List[CalendarEvent]):
+                 calendar_events: List[CalendarEvent],
+                 alerts: Optional[List[Dict[str, Any]]] = None):
         self.weather_periods = weather_periods
         self.calendar_events = calendar_events
+        self.alerts = alerts or []
 
 
 class FetchDisplayInfoUseCase:
@@ -24,4 +26,7 @@ class FetchDisplayInfoUseCase:
         weather = self.weather_controller.get_weather(
             latitude, longitude, weather_periods)
         calendar = self.calendar_controller.get_today_events(calendar_max)
-        return DisplayInfo(weather_periods=weather, calendar_events=calendar)
+        alerts = self.weather_controller.get_alerts(latitude, longitude)
+        return DisplayInfo(weather_periods=weather,
+                           calendar_events=calendar,
+                           alerts=alerts)

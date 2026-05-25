@@ -70,6 +70,15 @@ def main():
                 for p in weather_vm['hourly']:
                     print(f"  {p['name']}: {p['temp']}  {p['condition']}")
 
+                alerts = weather_vm.get('alerts', [])
+                if alerts:
+                    print()
+                    print("⚠  ALERTS")
+                    print("-" * 50)
+                    for a in alerts:
+                        print(f"  {a['event']}: {a['headline']}")
+                    print()
+
                 print()
                 print("=" * 50)
                 print("Today's Schedule")

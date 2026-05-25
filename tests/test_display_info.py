@@ -15,10 +15,14 @@ class MockWeatherController:
             WeatherData(72, "F", "5 mph", "NE", "Sunny", "Sunny", 45, "2025-06-01T12:00:00Z", "NOW"),
             WeatherData(55, "F", "10 mph", "N", "Clear", "Clear", 45, "2025-06-01T18:00:00Z", "TONIGHT"),
         ]
+        self.alerts = [{'properties': {'event': 'Test Alert', 'headline': 'Test', 'severity': 'Minor'}}]
 
     def get_weather(self, latitude, longitude, periods_count=3):
         self.call_count += 1
         return self.periods[:periods_count]
+
+    def get_alerts(self, latitude, longitude):
+        return self.alerts
 
 
 class MockCalendarController:
@@ -68,3 +72,11 @@ class TestFetchDisplayInfoUseCase:
 
         assert len(info.weather_periods) == 1
         assert len(info.calendar_events) == 1
+
+    def test_includes_alerts(self):
+        wc = MockWeatherController()
+        cc = MockCalendarController()
+        use_case = FetchDisplayInfoUseCase(wc, cc)
+        info = use_case.execute(40.7, -73.9)
+        assert info.alerts == wc.alerts
+        assert len(info.alerts) == 1

@@ -137,6 +137,7 @@ class WeatherAndCalendarDisplay:
         self.humidity_label.config(text=cw['humidity'])
         self.wind_label.config(text=cw['wind'])
         self._render_hourly(weather_vm['hourly'])
+        self._render_alerts(weather_vm.get('alerts', []))
 
     def _render_hourly(self, periods):
         for widget in self.hourly_container.winfo_children():
@@ -164,6 +165,19 @@ class WeatherAndCalendarDisplay:
             tk.Label(frame, text=p['wind'],
                      font=("Helvetica", 12), fg="lightgray", bg="black"
                      ).pack(pady=(2, 5))
+
+    def _render_alerts(self, alerts):
+        self.alerts_text.config(state="normal")
+        self.alerts_text.delete("1.0", tk.END)
+
+        if not alerts:
+            self.alerts_frame.grid_remove()
+        else:
+            self.alerts_frame.grid()
+            for a in alerts:
+                self.alerts_text.insert(tk.END,
+                    f"⚠ {a['event']}: {a['headline']}\n\n")
+            self.alerts_text.config(state="disabled")
 
     @staticmethod
     def _draw_rounded_border(canvas):

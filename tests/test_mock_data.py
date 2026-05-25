@@ -91,3 +91,27 @@ class TestMockWeatherGateway:
         for p in periods:
             assert p.temperature is not None
             assert p.short_forecast is not None
+
+    def test_alerts_default_to_empty(self):
+        gw = MockWeatherGateway()
+        alerts = gw.get_active_alerts(40.7, -73.9)
+        assert alerts == {'features': []}
+
+    def test_can_set_mock_alerts(self):
+        gw = MockWeatherGateway()
+        gw.set_alerts([
+            {'properties': {'event': 'Storm Warning', 'headline': 'Storm', 'severity': 'Severe'}},
+        ])
+        result = gw.get_active_alerts(40.7, -73.9)
+        assert len(result['features']) == 1
+        assert result['features'][0]['properties']['event'] == 'Storm Warning'
+
+    def test_alerts_flow_through_use_case(self):
+        gw = MockWeatherGateway()
+        gw.set_alerts([
+            {'properties': {'event': 'Flood Watch', 'headline': 'Watch', 'severity': 'Moderate'}},
+        ])
+        use_case = FetchWeatherUseCase(gw)
+        alerts = use_case.get_alerts(40.7, -73.9)
+        assert len(alerts) == 1
+        assert alerts[0]['properties']['event'] == 'Flood Watch'

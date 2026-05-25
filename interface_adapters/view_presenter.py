@@ -6,6 +6,18 @@ from utils.weather_art import get_weather_symbol, get_current_weather_art
 
 
 class ViewPresenter:
+    @staticmethod
+    def _parse_alerts(info: DisplayInfo) -> List[Dict[str, Any]]:
+        alerts = []
+        for feature in (info.alerts or []):
+            p = feature.get('properties', {})
+            alerts.append({
+                'event': p.get('event', 'Alert'),
+                'headline': p.get('headline', ''),
+                'severity': p.get('severity', 'Unknown'),
+            })
+        return alerts
+
     def present_weather(self, info: DisplayInfo) -> Dict[str, Any]:
         periods = info.weather_periods
         if not periods:
@@ -41,7 +53,7 @@ class ViewPresenter:
                 'wind': f"Wind: {p.wind_speed} {p.wind_direction}",
             })
 
-        return {'current': current, 'hourly': hourly}
+        return {'current': current, 'hourly': hourly, 'alerts': self._parse_alerts(info)}
 
     def present_calendar(self, info: DisplayInfo) -> Dict[str, Any]:
         events = info.calendar_events
