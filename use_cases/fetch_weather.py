@@ -12,7 +12,7 @@ class FetchWeatherUseCase:
         self.weather_gateway = weather_gateway
 
     def _now_from_observation(self, points_data, hourly_data):
-        """Build NOW WeatherData from observation (temp/humidity) + hourly forecast (wind/conditions)."""
+        """Build NOW WeatherData from observation (temp/humidity) + forecast (wind/conditions)."""
         obs_temp = None
         obs_humidity = None
         obs_ts = None
@@ -31,7 +31,7 @@ class FetchWeatherUseCase:
         except Exception:
             pass
 
-        # Always get wind/conditions from the hourly forecast (matches weather.gov display)
+        # Always get wind/conditions from the forecast (matches weather.gov display)
         if hourly_data['properties']['periods']:
             hp = hourly_data['properties']['periods'][0]
             temperature = _c_to_f(
@@ -69,7 +69,7 @@ class FetchWeatherUseCase:
 
         weather_data_list = []
 
-        # ---- NOW: observation temp/humidity + hourly forecast wind/conditions ----
+        # ---- NOW: observation temp/humidity + forecast wind/conditions ----
         now_data = self._now_from_observation(points_data, hourly_data)
 
         if now_data is not None:

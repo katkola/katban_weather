@@ -25,32 +25,32 @@ class MockCalendarGateway:
         return [
             {
                 'summary': 'Daily Standup',
-                'start': {'dateTime': dt(9, 0)},
-                'end': {'dateTime': dt(9, 30)},
+                'start': {'dateTime': dt(10, 0)},
+                'end': {'dateTime': dt(10, 30)},
                 'location': 'Conference Room B',
                 'eventType': 'default',
             },
             {
-                'summary': 'Review Pull Requests',
+                'summary': 'Review Joisting Manual',
                 'start': {'dateTime': dt(11, 0)},
                 'end': {'dateTime': dt(11, 45)},
                 'eventType': 'task',
             },
             {
-                'summary': 'Write release notes draft',
+                'summary': 'Write cryptic poetry',
                 'start': {'dateTime': dt(16, 0)},
                 'end': {'dateTime': dt(16, 30)},
                 'eventType': 'task',
             },
             {
-                'summary': 'Yoga Class',
+                'summary': 'Stretch Some Prophecies',
                 'start': {'dateTime': dt(17, 0)},
                 'end': {'dateTime': dt(18, 0)},
                 'location': 'Wellness Center',
                 'eventType': 'default',
             },
             {
-                'summary': 'Q2 Project Milestone Due',
+                'summary': 'Nourish the Spirit',
                 'start': {'date': date_only(0)},
                 'end': {'date': date_only(2)},
                 'eventType': 'task',

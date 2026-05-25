@@ -71,21 +71,18 @@ class ViewPresenter:
         if all_day:
             sections.append({
                 'title': 'ALL DAY',
-                'color': '#6ab04c',
                 'items': [self._item_vm(e) for e in all_day],
             })
 
         if timed_events:
             sections.append({
                 'title': 'EVENTS',
-                'color': '#4a9eff',
                 'items': [self._item_vm(e) for e in timed_events],
             })
 
         if timed_tasks:
             sections.append({
                 'title': 'TASKS',
-                'color': '#e8a838',
                 'items': [self._item_vm(e) for e in timed_tasks],
             })
 

@@ -39,7 +39,7 @@ class WeatherGateway:
         return response.json()
 
     def get_hourly_forecast(self, hourly_url):
-        """Get hourly forecast data"""
+        """Get forecast data"""
         response = self.session.get(hourly_url)
         response.raise_for_status()
         return response.json()

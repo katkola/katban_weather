@@ -70,7 +70,6 @@ class TestPresentCalendar:
     def test_all_day_section_first(self):
         vm = ViewPresenter().present_calendar(make_info())
         assert vm['sections'][0]['title'] == 'ALL DAY'
-        assert vm['sections'][0]['color'] == '#6ab04c'
 
     def test_events_section_contains_timed_events(self):
         vm = ViewPresenter().present_calendar(make_info())
