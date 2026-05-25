@@ -34,13 +34,19 @@ def main():
     # Calendar controller (falls back to mock data if unavailable)
     from use_cases.fetch_calendar import FetchCalendarUseCase
     from interface_adapters.calendar_controller import CalendarController
-    try:
-        from framework_drivers.calendar_gateway import CalendarGateway
-        calendar_gateway = CalendarGateway()
-    except (ImportError, FileNotFoundError):
-        print("Calendar credentials not found, using mock data.")
-        from mock_data.calendar_mock_data import MockCalendarGateway
-        calendar_gateway = MockCalendarGateway()
+    calendar_config = config.load_config().get('calendar', {})
+    ics_url = calendar_config.get('ics_url', '')
+    if ics_url:
+        from framework_drivers.ics_calendar_gateway import IcsCalendarGateway
+        calendar_gateway = IcsCalendarGateway(ics_url)
+    else:
+        try:
+            from framework_drivers.calendar_gateway import CalendarGateway
+            calendar_gateway = CalendarGateway()
+        except (ImportError, FileNotFoundError):
+            print("Calendar credentials not found, using mock data.")
+            from mock_data.calendar_mock_data import MockCalendarGateway
+            calendar_gateway = MockCalendarGateway()
     fetch_calendar_use_case = FetchCalendarUseCase(calendar_gateway)
     calendar_controller = CalendarController(fetch_calendar_use_case)
 

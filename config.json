@@ -11,5 +11,8 @@
   "api": {
     "user_agent": "KanBan_Weather_Display"
   },
+  "calendar": {
+    "ics_url": ""
+  },
   "development": {}
 }

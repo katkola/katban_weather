@@ -96,5 +96,8 @@ class ConfigLoader:
             "api": {
                 "user_agent": "KanBan_Weather_Display (your.email@example.com)"
             },
+            "calendar": {
+                "ics_url": ""
+            },
             "development": {}
         }
