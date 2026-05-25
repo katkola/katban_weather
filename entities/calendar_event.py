@@ -4,13 +4,15 @@ from typing import Optional
 class CalendarEvent:
     def __init__(self, summary: str, start_time: datetime, end_time: datetime,
                  location: Optional[str] = None, description: Optional[str] = None,
-                 category: str = "event"):
+                 category: str = "event",
+                 source: Optional[str] = None):
         self.summary = summary
         self.start_time = start_time
         self.end_time = end_time
         self.location = location
         self.description = description
         self.category = category
+        self.source = source
 
     def to_dict(self):
         return {
@@ -19,7 +21,8 @@ class CalendarEvent:
             "end_time": self.end_time.isoformat() if self.end_time else None,
             "location": self.location,
             "description": self.description,
-            "category": self.category
+            "category": self.category,
+            "source": self.source,
         }
     
     @property

@@ -253,6 +253,14 @@ class WeatherAndCalendarDisplay:
                                bg=Colors.CARD_BACKGROUND, anchor="w")
         title_label.pack(anchor="w", pady=(8, 2), padx=(0, 20))
 
+        src = item.get('source')
+        if src:
+            source_label = tk.Label(details, text=f"[{src}]",
+                                    font=(Fonts.FAMILY, Fonts.CALENDAR_LOCATION),
+                                    fg=accent_color,
+                                    bg=Colors.CARD_BACKGROUND, anchor="w")
+            source_label.pack(anchor="w", padx=(0, 20), pady=(0, 2))
+
         loc = item.get('location')
         if loc:
             location_label = tk.Label(details, text=f"📍 {loc}",
@@ -357,9 +365,9 @@ if __name__ == "__main__":
         from utils.config_loader import ConfigLoader
         config = ConfigLoader()
         calendar_config = config.load_config().get('calendar', {})
-        ics_url = calendar_config.get('ics_url', '')
-        if ics_url:
-            calendar_gateway = IcsCalendarGateway(ics_url)
+        ics_urls = calendar_config.get('ics_urls', [])
+        if ics_urls:
+            calendar_gateway = IcsCalendarGateway(ics_urls)
         else:
             print("Calendar ICS URL not configured, using mock data.")
             from mock_data.calendar_mock_data import MockCalendarGateway

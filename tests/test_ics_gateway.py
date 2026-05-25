@@ -49,6 +49,9 @@ def _make_mock_response(ics_text, status=200):
     return mock_resp
 
 
+URL = 'https://example.com/cal.ics'
+
+
 class TestIcsCalendarGateway:
     def test_returns_google_api_style_dicts(self):
         today = _utc_today()
@@ -63,7 +66,7 @@ class TestIcsCalendarGateway:
         ])
 
         with patch('requests.get', return_value=_make_mock_response(ics)):
-            gateway = IcsCalendarGateway('https://example.com/cal.ics')
+            gateway = IcsCalendarGateway([{'url': URL}])
             events = gateway.get_today_events(max_results=10)
 
         assert len(events) == 1
@@ -87,7 +90,7 @@ class TestIcsCalendarGateway:
         ])
 
         with patch('requests.get', return_value=_make_mock_response(ics)):
-            gateway = IcsCalendarGateway('https://example.com/cal.ics')
+            gateway = IcsCalendarGateway([{'url': URL}])
             events = gateway.get_today_events(max_results=10)
 
         assert len(events) == 1
@@ -109,7 +112,7 @@ class TestIcsCalendarGateway:
         ])
 
         with patch('requests.get', return_value=_make_mock_response(ics)):
-            gateway = IcsCalendarGateway('https://example.com/cal.ics')
+            gateway = IcsCalendarGateway([{'url': URL}])
             events = gateway.get_today_events(max_results=10)
 
         assert events[0]['eventType'] == 'task'
@@ -137,7 +140,7 @@ class TestIcsCalendarGateway:
         ])
 
         with patch('requests.get', return_value=_make_mock_response(ics)):
-            gateway = IcsCalendarGateway('https://example.com/cal.ics')
+            gateway = IcsCalendarGateway([{'url': URL}])
             events = gateway.get_today_events(max_results=10)
 
         summaries = [e['summary'] for e in events]
@@ -157,7 +160,7 @@ class TestIcsCalendarGateway:
 
         ics = _build_ics(events_data)
         with patch('requests.get', return_value=_make_mock_response(ics)):
-            gateway = IcsCalendarGateway('https://example.com/cal.ics')
+            gateway = IcsCalendarGateway([{'url': URL}])
             events = gateway.get_today_events(max_results=3)
 
         assert len(events) == 3
@@ -183,21 +186,21 @@ class TestIcsCalendarGateway:
         ])
 
         with patch('requests.get', return_value=_make_mock_response(ics)):
-            gateway = IcsCalendarGateway('https://example.com/cal.ics')
+            gateway = IcsCalendarGateway([{'url': URL}])
             events = gateway.get_today_events(max_results=10)
 
         assert [e['summary'] for e in events] == ['Early', 'Middle', 'Late']
 
     def test_network_error_returns_empty_list(self):
         with patch('requests.get', side_effect=Exception("Connection error")):
-            gateway = IcsCalendarGateway('https://example.com/cal.ics')
+            gateway = IcsCalendarGateway([{'url': URL}])
             events = gateway.get_today_events()
 
         assert events == []
 
     def test_invalid_ics_returns_empty_list(self):
         with patch('requests.get', return_value=_make_mock_response("NOT ICS")):
-            gateway = IcsCalendarGateway('https://example.com/cal.ics')
+            gateway = IcsCalendarGateway([{'url': URL}])
             events = gateway.get_today_events()
 
         assert events == []
@@ -218,7 +221,7 @@ class TestIcsCalendarGateway:
         ])
 
         with patch('requests.get', return_value=_make_mock_response(ics)):
-            gateway = IcsCalendarGateway('https://example.com/cal.ics')
+            gateway = IcsCalendarGateway([{'url': URL}])
             use_case = FetchCalendarUseCase(gateway)
             events = use_case.execute(max_results=10)
 
@@ -230,6 +233,80 @@ class TestIcsCalendarGateway:
         assert len(all_day) == 1
         assert timed[0].summary == 'UseCase Event'
         assert all_day[0].summary == 'UseCase All Day'
+
+    def test_merges_events_from_multiple_urls(self):
+        today = _utc_today()
+        ics_a = _build_ics([
+            {
+                'summary': 'From A',
+                'dtstart': datetime(today.year, today.month, today.day, 10, 0, tzinfo=timezone.utc),
+                'dtend': datetime(today.year, today.month, today.day, 11, 0, tzinfo=timezone.utc),
+            },
+        ])
+        ics_b = _build_ics([
+            {
+                'summary': 'From B',
+                'dtstart': datetime(today.year, today.month, today.day, 14, 0, tzinfo=timezone.utc),
+                'dtend': datetime(today.year, today.month, today.day, 15, 0, tzinfo=timezone.utc),
+            },
+        ])
+
+        mock_get = Mock(side_effect=[
+            _make_mock_response(ics_a),
+            _make_mock_response(ics_b),
+        ])
+        with patch('requests.get', mock_get):
+            gateway = IcsCalendarGateway([
+                {'url': 'https://a.com/cal.ics', 'label': 'Cal A'},
+                {'url': 'https://b.com/cal.ics', 'label': 'Cal B'},
+            ])
+            events = gateway.get_today_events(max_results=10)
+
+        assert len(events) == 2
+        assert events[0]['summary'] == 'From A'
+        assert events[0]['calendar_name'] == 'Cal A'
+        assert events[1]['summary'] == 'From B'
+        assert events[1]['calendar_name'] == 'Cal B'
+
+    def test_one_url_failure_does_not_block_other(self):
+        today = _utc_today()
+        ics = _build_ics([
+            {
+                'summary': 'Survivor',
+                'dtstart': datetime(today.year, today.month, today.day, 10, 0, tzinfo=timezone.utc),
+                'dtend': datetime(today.year, today.month, today.day, 11, 0, tzinfo=timezone.utc),
+            },
+        ])
+
+        mock_get = Mock(side_effect=[
+            Exception("Network error"),
+            _make_mock_response(ics),
+        ])
+        with patch('requests.get', mock_get):
+            gateway = IcsCalendarGateway([
+                {'url': 'https://bad.com/cal.ics'},
+                {'url': 'https://good.com/cal.ics'},
+            ])
+            events = gateway.get_today_events(max_results=10)
+
+        assert len(events) == 1
+        assert events[0]['summary'] == 'Survivor'
+
+    def test_tags_events_with_calendar_name(self):
+        today = _utc_today()
+        ics = _build_ics([
+            {
+                'summary': 'Labelled Event',
+                'dtstart': datetime(today.year, today.month, today.day, 10, 0, tzinfo=timezone.utc),
+                'dtend': datetime(today.year, today.month, today.day, 11, 0, tzinfo=timezone.utc),
+            },
+        ])
+
+        with patch('requests.get', return_value=_make_mock_response(ics)):
+            gateway = IcsCalendarGateway([{'url': URL, 'label': 'My Cal'}])
+            events = gateway.get_today_events(max_results=10)
+
+        assert events[0]['calendar_name'] == 'My Cal'
 
     def test_caches_ics_content(self):
         today = _utc_today()
@@ -243,7 +320,7 @@ class TestIcsCalendarGateway:
 
         mock_get = Mock(return_value=_make_mock_response(ics))
         with patch('requests.get', mock_get):
-            gateway = IcsCalendarGateway('https://example.com/cal.ics', cache_ttl=60)
+            gateway = IcsCalendarGateway([{'url': URL}], cache_ttl=60)
             gateway.get_today_events()
             gateway.get_today_events()
 
@@ -261,7 +338,7 @@ class TestIcsCalendarGateway:
 
         mock_get = Mock(return_value=_make_mock_response(ics))
         with patch('requests.get', mock_get):
-            gateway = IcsCalendarGateway('https://example.com/cal.ics', cache_ttl=0)
+            gateway = IcsCalendarGateway([{'url': URL}], cache_ttl=0)
             gateway.get_today_events()
             gateway.get_today_events()
 
@@ -277,7 +354,7 @@ class TestIcsCalendarGateway:
         ])
 
         with patch('requests.get', return_value=_make_mock_response(ics_text)):
-            gateway = IcsCalendarGateway('https://example.com/cal.ics')
+            gateway = IcsCalendarGateway([{'url': URL}])
             use_case = FetchCalendarUseCase(gateway)
             events = use_case.execute(max_results=10)
 
@@ -296,7 +373,7 @@ class TestIcsCalendarGateway:
         ])
 
         with patch('requests.get', return_value=_make_mock_response(ics)):
-            gateway = IcsCalendarGateway('https://example.com/cal.ics')
+            gateway = IcsCalendarGateway([{'url': URL}])
             events = gateway.get_today_events()
 
         assert events == []

@@ -1,3 +1,4 @@
+import zoneinfo
 from typing import List, Dict, Any, Optional
 from entities.calendar_event import CalendarEvent
 from entities.weather_data import WeatherData
@@ -90,11 +91,14 @@ class ViewPresenter:
 
     @staticmethod
     def _item_vm(event: CalendarEvent) -> Dict[str, Any]:
-        time_str = event.start_time.strftime("%I:%M %p")
+        LOCAL_TZ = zoneinfo.ZoneInfo("America/New_York")
+        start = event.start_time.astimezone(LOCAL_TZ) if event.start_time.tzinfo else event.start_time
+        time_str = start.strftime("%I:%M %p")
         if event.is_all_day:
             time_str = "All Day"
         return {
             'time': time_str,
             'title': event.summary,
             'location': event.location,
+            'source': event.source,
         }

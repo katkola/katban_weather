@@ -36,7 +36,8 @@ class FetchCalendarUseCase:
                 end_time=end_time,
                 location=raw_event.get('location'),
                 description=raw_event.get('description'),
-                category=category
+                category=category,
+                source=raw_event.get('calendar_name'),
             )
             events.append(event)
 

@@ -1,3 +1,4 @@
+import zoneinfo
 import time
 import requests
 from datetime import datetime, date, timedelta, timezone
@@ -6,34 +7,50 @@ from icalendar import Calendar
 
 
 class IcsCalendarGateway:
-    def __init__(self, ics_url: str, cache_ttl: int = 60):
-        self.ics_url = ics_url
-        self.cache_ttl = cache_ttl
-        self._cache: Optional[str] = None
-        self._cache_time: float = 0
+    TIMEZONE = zoneinfo.ZoneInfo("America/New_York")
 
-    def _fetch_ics(self) -> str:
+    def __init__(self, calendars: List[Dict[str, str]], cache_ttl: int = 60):
+        self.calendars = calendars
+        self.cache_ttl = cache_ttl
+        self._cache: Dict[str, tuple[str, float]] = {}
+
+    def _fetch_ics(self, url: str) -> str:
         now = time.time()
-        if self._cache is not None and (now - self._cache_time) < self.cache_ttl:
-            return self._cache
-        response = requests.get(self.ics_url, timeout=10)
+        cached = self._cache.get(url)
+        if cached is not None and (now - cached[1]) < self.cache_ttl:
+            return cached[0]
+        response = requests.get(url, timeout=10)
         response.raise_for_status()
-        self._cache = response.text
-        self._cache_time = now
-        return self._cache
+        self._cache[url] = (response.text, now)
+        return response.text
 
     def get_today_events(self, max_results: int = 10) -> List[Dict[str, Any]]:
-        try:
-            ics_content = self._fetch_ics()
-            cal = Calendar.from_ical(ics_content)
-        except Exception:
-            return []
-
-        utc_now = datetime.now(timezone.utc)
-        today_start = datetime(
-            utc_now.year, utc_now.month, utc_now.day, tzinfo=timezone.utc)
+        local_now = datetime.now(self.TIMEZONE)
+        today_start_local = datetime(
+            local_now.year, local_now.month, local_now.day, tzinfo=self.TIMEZONE)
+        today_start = today_start_local.astimezone(timezone.utc)
         today_end = today_start + timedelta(days=1) - timedelta(microseconds=1)
 
+        all_events = []
+        for cal_entry in self.calendars:
+            url = cal_entry['url']
+            label = cal_entry.get('label', '')
+            try:
+                ics_content = self._fetch_ics(url)
+                cal = Calendar.from_ical(ics_content)
+                events = self._parse_calendar(cal, today_start, today_end)
+                for e in events:
+                    e['calendar_name'] = label
+                all_events.extend(events)
+            except Exception:
+                continue
+
+        all_events.sort(key=lambda e: (
+            e.get('start', {}).get('dateTime') or e.get('start', {}).get('date', '')
+        ))
+        return all_events[:max_results]
+
+    def _parse_calendar(self, cal, today_start, today_end):
         events = []
         for component in cal.walk():
             if component.name != 'VEVENT':
@@ -76,11 +93,7 @@ class IcsCalendarGateway:
                 event['description'] = str(description)
 
             events.append(event)
-
-        events.sort(key=lambda e: (
-            e.get('start', {}).get('dateTime') or e.get('start', {}).get('date', '')
-        ))
-        return events[:max_results]
+        return events
 
     @staticmethod
     def _to_utc_datetime(dt_value):

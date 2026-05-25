@@ -30,9 +30,9 @@ def main():
 
     from framework_drivers.ics_calendar_gateway import IcsCalendarGateway
     calendar_config = config.load_config().get('calendar', {})
-    ics_url = calendar_config.get('ics_url', '')
-    if ics_url:
-        calendar_gateway = IcsCalendarGateway(ics_url)
+    ics_urls = calendar_config.get('ics_urls', [])
+    if ics_urls:
+        calendar_gateway = IcsCalendarGateway(ics_urls)
     else:
         print("Calendar ICS URL not configured, using mock data.")
         from mock_data.calendar_mock_data import MockCalendarGateway
@@ -90,9 +90,11 @@ def main():
                 for section in calendar_vm['sections']:
                     print(f"  [{section['title']}]")
                     for item in section['items']:
+                        src = item.get('source')
+                        src_str = f"  [{src}]" if src else ""
                         loc = item.get('location')
                         loc_str = f"  📍 {loc}" if loc else ""
-                        print(f"    {item['time']:>10}  {item['title']}{loc_str}")
+                        print(f"    {item['time']:>10}  {item['title']}{src_str}{loc_str}")
                     print()
 
                 print("Press Ctrl+C to exit")
