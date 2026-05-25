@@ -63,7 +63,7 @@ class WeatherAndCalendarDisplay:
         self.temp_label.pack()
 
         self.art_label = tk.Label(self.current_frame, text="",
-                                  font=(Fonts.MONO, Fonts.ART),
+                                  font=("Noto Color Emoji", Fonts.ART),
                                   fg=Colors.PRIMARY_TEXT, bg=Colors.BACKGROUND,
                                   justify="center")
         self.art_label.pack(pady=(5, 0))

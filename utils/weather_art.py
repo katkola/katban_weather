@@ -13,71 +13,27 @@ CLOUD_CATEGORIES = [
 ]
 
 SYMBOLS = {
-    'sunny':         '\u2600',
-    'night':         '\u263E',
+    'sunny':         '\U0001F324',
+    'night':         '\U0001F319',
     'partly_cloudy': '\u26C5',
     'cloudy':        '\u2601',
-    'rain':          '\u2614',
-    'snow':          '\u2744',
-    'storm':         '\u26A1',
-    'fog':           '\u2601',
-    'windy':         '\u2600',
+    'rain':          '\U0001F327',
+    'snow':          '\U0001F328',
+    'storm':         '\u26C8',
+    'fog':           '\U0001F32B',
+    'windy':         '\U0001F4A8',
 }
 
 ARTS = {
-    'sunny': (
-        '    \\   /',
-        '     .*.',
-        '     / \\',
-        '    /   \\'
-    ),
-    'night': (
-        '      ___',
-        "   .-'   '-.",
-        '  /        |',
-        ' |          |',
-        '  \\        /',
-        "   '-...-'"
-    ),
-    'partly_cloudy': (
-        '    \\  .--.',
-        "   _/_(    ).",
-        '  (___.__)__)'
-    ),
-    'cloudy': (
-        '     .--.',
-        "   .-(    ).",
-        '  (___.__)__)'
-    ),
-    'rain': (
-        '     .--.',
-        "   .-(    ).",
-        '  (___.__)__>',
-        '   /  /  /',
-        '  /  /  /'
-    ),
-    'snow': (
-        '     .--.',
-        "   .-(    ).",
-        '  (___.__)__>',
-        '   *  *  *',
-        '  *  *  *'
-    ),
-    'storm': (
-        '     .--.',
-        "   .-(    ).",
-        '  (___.__)__>',
-        '   \u26A1  /  /',
-        '  /  /  /'
-    ),
-    'fog': (
-        '  ~ ~ ~ ~ ~ ~',
-        ' ~ ~ ~ ~ ~ ~ ~'
-    ),
-    'windy': (
-        '  ~~~ ~~ ~~',
-        ' ~~~ ~~~ ~~'
-    ),
+    'sunny':         '\U0001F324',
+    'night':         '\U0001F319',
+    'partly_cloudy': '\u26C5',
+    'cloudy':        '\u2601',
+    'rain':          '\U0001F327',
+    'snow':          '\U0001F328',
+    'storm':         '\u26C8',
+    'fog':           '\U0001F32B',
+    'windy':         '\U0001F4A8',
 }
 
 
@@ -119,4 +75,4 @@ def get_weather_symbol(short_forecast, period_name=None):
 def get_current_weather_art(short_forecast, period_name=None):
     is_night = _is_night(period_name)
     category = _categorize(short_forecast, is_night)
-    return '\n'.join(ARTS.get(category, ARTS['sunny']))
+    return ARTS.get(category, ARTS['sunny'])

@@ -6,7 +6,7 @@
   },
   "display": {
     "update_interval_seconds": 30,
-    "use_gui": false
+    "use_gui": true
   },
   "api": {
     "user_agent": "KanBan_Weather_Display"
