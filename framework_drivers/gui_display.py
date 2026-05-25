@@ -100,13 +100,30 @@ class WeatherAndCalendarDisplay:
         self.alerts_frame.grid(row=1, column=0, columnspan=2, sticky="nsew")
 
         self.alerts_label = tk.Label(self.alerts_frame, text="Alerts",
-                                     font=("Helvetica", 24), fg="white", bg="black")
+                                     font=("Helvetica", 40), fg="white", bg="black")
         self.alerts_label.pack(anchor="w")
 
         self.alerts_text = tk.Text(self.alerts_frame, height=4, bg='black', fg='red',
-                                   font=("Helvetica", 16), wrap="word")
+                                   font=("Helvetica", 24), wrap="word")
         self.alerts_text.pack(fill="x", pady=(5, 0))
         self.alerts_text.config(state="disabled")
+
+        # Loading overlay (covers everything until first data fetch)
+        self.loading_frame = tk.Frame(self.root, bg='black')
+        self.loading_frame.place(x=0, y=0, relwidth=1, relheight=1)
+
+        loading_center = tk.Frame(self.loading_frame, bg='black')
+        loading_center.place(relx=0.5, rely=0.5, anchor="center")
+
+        tk.Label(loading_center, text="Loading...",
+                 font=("Helvetica", 48), fg="white", bg="black"
+                 ).pack(pady=20)
+
+        tk.Label(loading_center, text="Fetching weather and calendar data",
+                 font=("Helvetica", 24), fg="lightgray", bg="black"
+                 ).pack()
+
+        self._loaded = False
 
         # Bottom time display
         self.time_label = tk.Label(self.root, text="",
@@ -129,7 +146,13 @@ class WeatherAndCalendarDisplay:
 
         self.update_time()
 
+    def _hide_loading(self):
+        if not self._loaded:
+            self._loaded = True
+            self.loading_frame.place_forget()
+
     def render_weather(self, weather_vm):
+        self._hide_loading()
         cw = weather_vm['current']
         self.temp_label.config(text=cw['temp_text'])
         self.art_label.config(text=cw['art'])
@@ -256,6 +279,7 @@ class WeatherAndCalendarDisplay:
                  ).pack(fill="x", pady=(10, 2))
 
     def render_calendar(self, calendar_vm):
+        self._hide_loading()
         for widget in self.calendar_container.winfo_children():
             widget.destroy()
 

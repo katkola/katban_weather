@@ -31,48 +31,10 @@ class MockCalendarGateway:
                 'eventType': 'default',
             },
             {
-                'summary': 'Design Review',
-                'start': {'dateTime': dt(10, 0)},
-                'end': {'dateTime': dt(11, 0)},
-                'location': 'Main Office',
-                'eventType': 'default',
-            },
-            {
-                'summary': 'Company Anniversary',
-                'start': {'date': date_only(0)},
-                'end': {'date': date_only(1)},
-                'eventType': 'default',
-            },
-            {
                 'summary': 'Review Pull Requests',
                 'start': {'dateTime': dt(11, 0)},
                 'end': {'dateTime': dt(11, 45)},
                 'eventType': 'task',
-            },
-            {
-                'summary': 'Lunch with Client',
-                'start': {'dateTime': dt(12, 0)},
-                'end': {'dateTime': dt(13, 0)},
-                'location': 'Downtown Cafe',
-                'eventType': 'default',
-            },
-            {
-                'summary': 'Sprint Planning',
-                'start': {'dateTime': dt(14, 0)},
-                'end': {'dateTime': dt(16, 0)},
-                'location': 'Workshop Room 3',
-                'description': (
-                    'Review sprint backlog and assign tasks for '
-                    'the upcoming sprint.'
-                ),
-                'eventType': 'default',
-            },
-            {
-                'summary': 'Team Sync',
-                'start': {'dateTime': dt(15, 30)},
-                'end': {'dateTime': dt(16, 0)},
-                'location': 'Break Room',
-                'eventType': 'default',
             },
             {
                 'summary': 'Write release notes draft',
